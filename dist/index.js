@@ -23,7 +23,6 @@ module.exports = class {
   async execute () {
     const { argv } = this
 
-    const projectKey = argv.project
     const issueId = argv.issue
 
     const issue = await this.Jira.getIssue(issueId)
@@ -33,11 +32,6 @@ module.exports = class {
     }
 
     let providedFields = [{
-      key: 'project',
-      value: {
-        key: projectKey,
-      },
-    }, {
       key: 'summary',
       value: argv.summary,
     }]
@@ -55,23 +49,29 @@ module.exports = class {
 
     const payload = providedFields.reduce((acc, field) => {
       acc.fields[field.key] = field.value
+      console.log(`fields.${field.key}: ${JSON.stringify(field.value)}`);
 
       return acc
     }, {
       fields: {},
     })
 
-    await this.Jira.updateIssue(issueId, {
-      fields: {
-        description: "sjefiosejfoejsi"
-      }
-    });
+    await this.Jira.updateIssue(issueId, payload);
 
     // console.log(`transitionedIssue:${JSON.stringify(transitionedIssue, null, 4)}`)
     console.log(`Update ${issueId} complete.`)
     console.log(`Link to issue: ${this.config.baseUrl}/browse/${issueId}`)
 
     return {}
+  }
+
+  transformFields (fieldsString) {
+    const fields = JSON.parse(fieldsString)
+
+    return Object.keys(fields).map(fieldKey => ({
+      key: fieldKey,
+      value: fields[fieldKey],
+    }))
   }
 }
 
@@ -187,8 +187,6 @@ class Jira {
         fields
       )
     }
-
-    console.log(state.res.body);
 
     return state.res.body
   }
