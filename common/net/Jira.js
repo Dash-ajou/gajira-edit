@@ -107,6 +107,8 @@ class Jira {
       )
     }
 
+    console.log(state.res.body);
+
     return state.res.body
   }
 }
