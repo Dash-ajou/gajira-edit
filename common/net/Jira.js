@@ -11,9 +11,9 @@ class Jira {
     this.email = email
   }
 
-  async updateIssue (body) {
+  async updateIssue (issueId, body) {
     return this.fetch('updateIssue',
-      { pathname: '/rest/api/2/issue' },
+      { pathname: `/rest/api/2/issue/${issueId}` },
       { method: 'PUT', body })
   }
 
