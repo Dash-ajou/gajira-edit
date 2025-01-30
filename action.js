@@ -16,7 +16,6 @@ module.exports = class {
 
   async execute () {
     const { argv } = this
-    console.log(argv)
 
     const issueId = argv.issue
 
@@ -26,10 +25,14 @@ module.exports = class {
       return
     }
 
-    let providedFields = [{
-      key: 'summary',
-      value: argv.summary,
-    }]
+    let providedFields = []
+
+    if (argv.summary) {
+      providedFields.push({
+        key: 'summary',
+        value: argv.summary,
+      })
+    }
 
     if (argv.description) {
       providedFields.push({

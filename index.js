@@ -37,8 +37,6 @@ function parseArgs () {
 
   return {
     issue: core.getInput('issue'),
-    project: core.getInput('project'),
-    issuetype: core.getInput('issuetype'),
     summary: core.getInput('summary'),
     description: core.getInput('description'),
     fields: core.getInput('fields')

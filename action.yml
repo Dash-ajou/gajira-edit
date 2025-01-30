@@ -4,15 +4,9 @@ inputs:
   issue:
     description: Key of the issue to be transitioned
     required: true
-  project:
-    description: Key of the project
-    required: true
-  issuetype:
-    description: "Type of the issue to be created. Example: 'Incident'"
-    required: true
   summary:
     description: Issue summary
-    required: true
+    required: false
   description:
     description: Issue description
     required: false

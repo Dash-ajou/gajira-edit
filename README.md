@@ -1,7 +1,3 @@
----------
-⚠️ This repository isn’t maintained anymore.
----------
-
 # Jira Edit
 
 Update edited issue content to Jira
@@ -12,18 +8,19 @@ Update edited issue content to Jira
 
 > ##### Note: this action requires [Jira Login Action](https://github.com/marketplace/actions/jira-login)
 
-![Issue Transition](../assets/example.gif?raw=true)
-
 Example transition action:
 
 ```yaml
-- name: Transition issue
-  id: transition
-  uses: atlassian/gajira-transition@v3
-  with:
-    issue: GA-181
-    transition: "In progress"
-}
+  - name: Update Issue
+    id: update
+    uses: Dash-ajou/gajira-edit@main
+    with:
+      issue: "JIRA_KEY"
+      project: 'DASH'
+      issuetype: 'Task'
+      summary: "ISSUE_TITLE"
+      description: "DESCRIPTION_TEXT" # optional
+      fields: #...
 ```
 
 The `issue` parameter can be an issue id created or retrieved by an upstream action – for example, [`Create`](https://github.com/marketplace/actions/jira-create) or [`Find Issue Key`](https://github.com/marketplace/actions/jira-find). Here is full example workflow:
@@ -63,16 +60,10 @@ jobs:
 - None
 
 ### Inputs
-- `issue` (required) - issue key to perform a transition on
-- `transition` - Case insensetive name of transition to apply. Example: `Cancel` or `Accept`
-- `transitionId` - transition id to apply to an issue
+- `issue` (required) - Key of the issue to be transitioned
+- `summary` - Issue summary
+- `description` - Issue description
+- `fields` - Additional fields in JSON format
 
 ### Outputs
-- None
-
-### Reads fields from config file at $HOME/jira/config.yml
-- `issue`
-- `transitionId`
-
-### Writes fields to config file at $HOME/jira/config.yml
 - None
