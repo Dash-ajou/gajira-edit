@@ -1,0 +1,24 @@
+name: Jira Issue Edit
+description: Update changed issue content to Jira
+inputs:
+  issue:
+    description: Key of the issue to be transitioned
+    required: true
+  project:
+    description: Key of the project
+    required: true
+  issuetype:
+    description: "Type of the issue to be created. Example: 'Incident'"
+    required: true
+  summary:
+    description: Issue summary
+    required: true
+  description:
+    description: Issue description
+    required: false
+  fields:
+    description: Additional fields in JSON format
+    required: false
+runs:
+  using: 'node16'
+  main: './dist/index.js'
