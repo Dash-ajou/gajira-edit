@@ -16,6 +16,7 @@ module.exports = class {
 
   async execute () {
     const { argv } = this
+    console.log(argv)
 
     const issueId = argv.issue
 
