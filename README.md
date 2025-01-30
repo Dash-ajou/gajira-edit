@@ -2,9 +2,9 @@
 ⚠️ This repository isn’t maintained anymore.
 ---------
 
-# Jira Transition
+# Jira Edit
 
-Transition Jira issue
+Update edited issue content to Jira
 
 > ##### Only supports Jira Cloud. Does not support Jira Server (hosted)
 
