@@ -61,7 +61,11 @@ module.exports = class {
       fields: {},
     })
 
-    await this.Jira.updateIssue(issueId, payload);
+    await this.Jira.updateIssue(issueId, {
+      fields: {
+        description: "sjefiosejfoejsi"
+      }
+    });
 
     // console.log(`transitionedIssue:${JSON.stringify(transitionedIssue, null, 4)}`)
     console.log(`Update ${issueId} complete.`)
@@ -176,8 +180,6 @@ class Jira {
         originError: error,
         source: 'jira',
       }
-
-      delete state.req.headers
 
       throw Object.assign(
         new Error('Jira API error'),
