@@ -25,11 +25,15 @@ module.exports = class {
       return
     }
 
-    console.log("================");
-    console.log(JSON.stringify(issue.fields?.subtasks));
-    console.log("================");
-    console.log(JSON.stringify(issue.fields?.description));
-    console.log("================");
+    const subtasks = issue.fields?.subtasks
+    .map(subtask => ({
+      key: subtask.fields.summary,
+      value: subtask.key
+    }))
+    .reduce((acc, {key, value}) => {
+      acc[key] = value;
+      return acc
+    }, {});
 
     let providedFields = []
 
@@ -60,9 +64,9 @@ module.exports = class {
       fields: {},
     })
 
-    // if (argv?.description) {
-    //   payload.fields.description = await this.createSubtask(projectKey, issueKey, argv.description);
-    // }
+    if (argv?.description) {
+      payload.fields.description = await this.createSubtask(projectKey, issueKey, argv.description, subtasks);
+    }
       
     await this.Jira.updateIssue(issueId, payload);
 
@@ -82,23 +86,64 @@ module.exports = class {
     }))
   }
 
-  async createSubtask(projectKey, issueKey, desc) {
-    const subtask_titles = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
+  async createSubtask(projectKey, issueKey, desc, subtasks) {
+    let new_cnt = 0;
+    const new_subtask_titles = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
       .map(v => {
         const a = {
           origin: v[0],
           summary: v[0].replace(/^\s*-\s*\[(x|\s)?\]\s*/, "").replace(/\n+$/, "").trim(),
           loc: v.index
         };
-        console.log(`subtask detected: ${a.summary}`);
         a.prefix = a.origin.replace(` ${a.summary}`, "");
+        if (subtasks[a.summary]) {
+          a.isNew = false;
+          a.issueId = subtasks[a.summary];
+          console.log(`registered subtask detected: ${a.summary}/${subtasks[a.summary]}`);
+        } else {
+          a.isNew = true;
+          new_cnt++;
+          console.log(`new subtask detected: ${a.summary}`);
+        }
         return a;
       });
 
-    if (subtask_titles.length == 0) return desc;
-
     await Promise.all(
-      subtask_titles.map(async ({prefix, origin, summary}) => {
+      new_subtask_titles.map(async ({isNew, issueId, prefix, origin, summary}) => {
+        if (!isNew) {
+          let is_checked = origin.match(/- \[(x| )\]/);
+          if (is_checked) {
+            is_checked = ["x", "X"].includes(is_checked[1])
+          } else is_checked = false;
+          const updated_status = is_checked ? "완료" : "해야 할 일";
+
+          const { transitions } = await this.Jira.getIssueTransitions(issueId)
+
+          const transitionToApply = _.find(transitions, 
+            (t) => (t.name.toLowerCase() === updated_status)
+          );
+
+          if (!transitionToApply) {
+            console.log('Please specify transition name or transition id.')
+            console.log('Possible transitions:')
+            transitions.forEach((t) => {
+              console.log(`{ id: ${t.id}, name: ${t.name} } transitions issue to '${t.to.name}' status.`)
+            })
+
+            return false;
+          }
+
+          console.log(`Selected transition:${JSON.stringify(transitionToApply, null, 4)}`)
+
+          await this.Jira.transitionIssue(issueId, {
+            transition: {
+              id: transitionToApply.id,
+            },
+          })
+
+          return true;
+        }
+
         const issue = await this.Jira.createIssue({
           fields: {
             project: {key: projectKey},
