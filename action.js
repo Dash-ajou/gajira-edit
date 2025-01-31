@@ -26,7 +26,9 @@ module.exports = class {
     }
 
     console.log("================");
-    console.log(JSON.stringify(issue));
+    console.log(JSON.stringify(issue.fields));
+    console.log("================");
+    console.log(JSON.stringify(issue.fields["sub-tasks"]));
     console.log("================");
 
     let providedFields = []
