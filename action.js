@@ -190,8 +190,11 @@ module.exports = class {
 
     await Promise.all(
       subtask_summaries.map(async ({isNew, issueId, prefix, origin, summary}) => {
-        if (!isNew) 
-          return await this.applySubtaskIssueStatus(origin, issueId);
+        if (!isNew) {
+          await this.applySubtaskIssueStatus(origin, issueId);
+          desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issueId}\n`);
+          return true;
+        }
 
         const issue = await this.createSubTaskIssue(projectKey, summary, parentIssueId);        
         desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issue.key}\n`);
