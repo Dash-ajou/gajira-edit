@@ -31,13 +31,17 @@ module.exports = class {
       return
     }
 
-    // console.log(Object.keys(issue));
-    // console.log(Object.keys(issue.fields));
     const projectKey = issue.fields?.project.key;
     const subtasks = issue.fields?.subtasks
     .map(subtask => ({
       key: subtask.fields.summary,
-      value: subtask.key
+      value: {
+        key: subtask.key, 
+        status: {
+          id: subtask.status.id,
+          name: subtask.status.name
+        }
+      }
     }))
     .reduce((acc, {key, value}) => {
       acc[key] = value;
@@ -107,8 +111,9 @@ module.exports = class {
         a.prefix = a.origin.replace(` ${a.summary}`, "");
         if (subtasks[a.summary]) {
           a.isNew = false;
-          a.issueId = subtasks[a.summary];
-          console.log(`registered subtask detected: ${a.summary}/${subtasks[a.summary]}`);
+          a.issueId = subtasks[a.summary].key;
+          a.status = subtasks[a.summary].status;
+          console.log(`registered subtask detected: ${a.summary}/${subtasks[a.summary].key}`);
         } else {
           a.isNew = true;
           new_cnt++;
@@ -149,9 +154,11 @@ module.exports = class {
     return null; 
   }
 
-  async applySubtaskIssueStatus(subtask_text, issueId) {
+  async applySubtaskIssueStatus(subtask_text, issueId, curr_status) {
     const statusName = this.getUpdatedStatusName(subtask_text);
     const transitionId = await this.getTransitionIdByStatusName(issueId, statusName);
+
+    if (transitionId === curr_status.id) return true;
 
     await this.Jira.transitionIssue(issueId, {
       transition: { id: transitionId },
@@ -195,9 +202,9 @@ module.exports = class {
     const [ new_cnt, subtask_summaries ] = this.getSubtaskSummaries(desc, subtasks);
 
     await Promise.all(
-      subtask_summaries.map(async ({isNew, issueId, prefix, origin, summary}) => {
+      subtask_summaries.map(async ({isNew, issueId, origin, summary, status}) => {
         if (!isNew) {
-          await this.applySubtaskIssueStatus(origin, issueId);
+          await this.applySubtaskIssueStatus(origin, issueId, status);
           desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issueId}\n`);
           return true;
         }
