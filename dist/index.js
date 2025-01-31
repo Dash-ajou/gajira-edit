@@ -38,8 +38,8 @@ module.exports = class {
       value: {
         key: subtask.key, 
         status: {
-          id: subtask.status.id,
-          name: subtask.status.name
+          id: subtask.fields.status.id,
+          name: subtask.fields.status.name
         }
       }
     }))
