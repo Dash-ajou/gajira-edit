@@ -157,6 +157,20 @@ module.exports = class {
       transition: { id: transitionId },
     });
 
+    this.applySubtaskUpdateLog(issueId, `하위작업 상태 변경(-> ${statusName})`);
+
+    return true;
+  }
+
+  async applySubtaskUpdateLog(issueId, add_description) {
+    const issue_info = await this.Jira.getIssue(issueId);
+    const {description: prev_desc} = issue_info.fields;
+    if (!prev_desc) return false;
+    
+    const new_desc = prev_desc + `\n- ${this.getCurrentDateTime()}: ${add_description}`;
+    await this.Jira.updateIssue(issueId, {
+      fields: {description: new_desc}
+    });
     return true;
   }
 
@@ -171,7 +185,6 @@ module.exports = class {
           
           h3. 작업이력
           - ${ this.getCurrentDateTime() } : 하위작업 자동생성 by ${ parentIssueId }
-
         `,
         parent: {key: parentIssueId}
       }
@@ -185,12 +198,13 @@ module.exports = class {
       subtask_summaries.map(async ({isNew, issueId, prefix, origin, summary}) => {
         if (!isNew) 
           return await this.applySubtaskIssueStatus(origin, issueId);
-        
+
         const issue = await this.createSubTaskIssue(projectKey, summary, parentIssueId);        
         desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issue.key}\n`);
         return true;
       })
     )
+
     return desc;
   }
   getCurrentDateTime(date) {
