@@ -147,6 +147,10 @@ module.exports = class {
     const statusName = this.getUpdatedStatusName(subtask_text);
     const transitionId = this.getTransitionIdByStatusName(issueId, statusName);
 
+    console.log(JSON.stringify({
+      transition: { id: transitionId },
+    }));
+
     await this.Jira.transitionIssue(issueId, {
       transition: { id: transitionId },
     });
