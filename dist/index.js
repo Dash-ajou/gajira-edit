@@ -74,7 +74,7 @@ module.exports = class {
     })
 
     if (argv?.description) {
-      payload.fields.description = await this.createSubtask(projectKey, issueKey, argv.description, subtasks);
+      payload.fields.description = await this.createSubtask(projectKey, issueId, argv.description, subtasks);
     }
       
     await this.Jira.updateIssue(issueId, payload);
@@ -95,7 +95,7 @@ module.exports = class {
     }))
   }
 
-  async createSubtask(projectKey, issueKey, desc, subtasks) {
+  async createSubtask(projectKey, parentIssueId, desc, subtasks) {
     let new_cnt = 0;
     const new_subtask_titles = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
       .map(v => {
@@ -162,10 +162,10 @@ module.exports = class {
               h2. 하위 작업: ${ summary }
               
               h3. 작업이력
-              - ${ this.getCurrentDateTime() } : 하위작업 자동생성 by ${ issueKey }
+              - ${ this.getCurrentDateTime() } : 하위작업 자동생성 by ${ parentIssueId }
 
             `,
-            parent: {key: issueKey}
+            parent: {key: parentIssueId}
           }
         });
         console.log(`subtask created: "${origin}" -> "${origin.replace(/\n+$/, "")} ${issue.key}"`);
