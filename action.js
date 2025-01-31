@@ -25,6 +25,7 @@ module.exports = class {
       return
     }
 
+    const projectKey = issue.project.key;
     const subtasks = issue.fields?.subtasks
     .map(subtask => ({
       key: subtask.fields.summary,
