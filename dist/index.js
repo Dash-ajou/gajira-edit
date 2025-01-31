@@ -151,14 +151,7 @@ module.exports = class {
 
   async applySubtaskIssueStatus(subtask_text, issueId) {
     const statusName = this.getUpdatedStatusName(subtask_text);
-    const transitionId = this.getTransitionIdByStatusName(issueId, statusName);
-
-    console.log(subtask_text, statusName);
-    console.log(issueId, transitionId);
-
-    console.log(JSON.stringify({
-      transition: { id: transitionId },
-    }));
+    const transitionId = await this.getTransitionIdByStatusName(issueId, statusName);
 
     await this.Jira.transitionIssue(issueId, {
       transition: { id: transitionId },
