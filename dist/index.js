@@ -32,9 +32,7 @@ module.exports = class {
     }
 
     console.log("================");
-    console.log(JSON.stringify(issue.fields));
-    console.log("================");
-    console.log(JSON.stringify(issue.fields["sub-tasks"]));
+    console.log(JSON.stringify(Object.keys(issue.fields)));
     console.log("================");
 
     let providedFields = []
