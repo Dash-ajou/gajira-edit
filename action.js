@@ -68,7 +68,7 @@ module.exports = class {
     })
 
     if (argv?.description) {
-      payload.fields.description = await this.createSubtask(projectKey, issueId, argv.description, subtasks);
+      payload.fields.description = await this.updateDescription(projectKey, issueId, argv.description, subtasks);
     }
       
     await this.Jira.updateIssue(issueId, payload);
@@ -89,9 +89,9 @@ module.exports = class {
     }))
   }
 
-  async createSubtask(projectKey, parentIssueId, desc, subtasks) {
+  getSubtaskSummaries(desc, subtasks) {
     let new_cnt = 0;
-    const new_subtask_titles = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
+    const subtask_summaries = [ ...desc.matchAll(/(\- \[).{0,}\n/g) ]
       .map(v => {
         const a = {
           origin: v[0],
@@ -111,58 +111,76 @@ module.exports = class {
         return a;
       });
 
+    return [new_cnt, subtask_summaries];
+  }
+
+  getUpdatedStatusName(origin_desc) {
+    let is_checked = origin_desc.match(/- \[(x| )\]/);
+    if (is_checked)
+      is_checked = ["x", "X"].includes(is_checked[1])
+    else is_checked = false;
+
+    return is_checked ? "완료" : "해야 할 일";
+  }
+
+  async getTransitionIdByStatusName(issueId, statusName) {
+    const { transitions } = await this.Jira.getIssueTransitions(issueId);
+    const transitionToApply = _.find(transitions, 
+      (t) => (t.name.toLowerCase() === statusName)
+    );
+
+    if (transitionToApply) {
+      console.log(`Selected transition:${JSON.stringify(transitionToApply, null, 4)}`)
+      return transitionToApply.id;
+    }
+
+    console.log('Please specify transition name or transition id.')
+    console.log('Possible transitions:')
+    transitions.forEach((t) => {
+      console.log(`{ id: ${t.id}, name: ${t.name} } transitions issue to '${t.to.name}' status.`)
+    })
+
+    return null; 
+  }
+
+  async applySubtaskIssueStatus(subtask_text, issueId) {
+    const statusName = this.getUpdatedStatusName(subtask_text);
+    const transitionId = this.getTransitionIdByStatusName(issueId, statusName);
+
+    await this.Jira.transitionIssue(issueId, {
+      transition: { id: transitionId },
+    });
+
+    return true;
+  }
+
+  async createSubTaskIssue(projectKey, summary, parentIssueId) {
+    return await this.Jira.createIssue({
+      fields: {
+        project: {key: projectKey},
+        issuetype: {name: "Subtask"},
+        summary,
+        description: `
+          h2. 하위 작업: ${ summary }
+          
+          h3. 작업이력
+          - ${ this.getCurrentDateTime() } : 하위작업 자동생성 by ${ parentIssueId }
+
+        `,
+        parent: {key: parentIssueId}
+      }
+    })
+  }
+
+  async updateDescription(projectKey, parentIssueId, desc, subtasks) {
+    const [ new_cnt, subtask_summaries ] = this.getSubtaskSummaries(desc, subtasks);
+
     await Promise.all(
-      new_subtask_titles.map(async ({isNew, issueId, prefix, origin, summary}) => {
-        if (!isNew) {
-          let is_checked = origin.match(/- \[(x| )\]/);
-          if (is_checked) {
-            is_checked = ["x", "X"].includes(is_checked[1])
-          } else is_checked = false;
-          const updated_status = is_checked ? "완료" : "해야 할 일";
-
-          const { transitions } = await this.Jira.getIssueTransitions(issueId)
-
-          const transitionToApply = _.find(transitions, 
-            (t) => (t.name.toLowerCase() === updated_status)
-          );
-
-          if (!transitionToApply) {
-            console.log('Please specify transition name or transition id.')
-            console.log('Possible transitions:')
-            transitions.forEach((t) => {
-              console.log(`{ id: ${t.id}, name: ${t.name} } transitions issue to '${t.to.name}' status.`)
-            })
-
-            return false;
-          }
-
-          console.log(`Selected transition:${JSON.stringify(transitionToApply, null, 4)}`)
-
-          await this.Jira.transitionIssue(issueId, {
-            transition: {
-              id: transitionToApply.id,
-            },
-          })
-
-          return true;
-        }
-
-        const issue = await this.Jira.createIssue({
-          fields: {
-            project: {key: projectKey},
-            issuetype: {name: "Subtask"},
-            summary,
-            description: `
-              h2. 하위 작업: ${ summary }
-              
-              h3. 작업이력
-              - ${ this.getCurrentDateTime() } : 하위작업 자동생성 by ${ parentIssueId }
-
-            `,
-            parent: {key: parentIssueId}
-          }
-        });
-        console.log(`subtask created: "${origin}" -> "${origin.replace(/\n+$/, "")} ${issue.key}"`);
+      subtask_summaries.map(async ({isNew, issueId, prefix, origin, summary}) => {
+        if (!isNew) 
+          return await this.applySubtaskIssueStatus(origin, issueId);
+        
+        const issue = await this.createSubTaskIssue(projectKey, summary, parentIssueId);        
         desc = desc.replace(origin, `${origin.replace(/\n+$/, "")} ${issue.key}\n`);
         return true;
       })
