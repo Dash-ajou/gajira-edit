@@ -47,7 +47,7 @@ module.exports = class {
     if (argv.summary) {
       providedFields.push({
         key: 'summary',
-        value: argv.summary.replaceAll(`\[${projectKey}\] `, ""),
+        value: argv.summary.replaceAll(`\[${projectKey}-${issueId}\] `, ""),
       })
     }
 
