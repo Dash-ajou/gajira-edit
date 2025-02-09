@@ -53,7 +53,7 @@ module.exports = class {
     if (argv.summary) {
       providedFields.push({
         key: 'summary',
-        value: argv.summary,
+        value: argv.summary.replaceAll(`\[${projectKey}\] `, ""),
       })
     }
 
