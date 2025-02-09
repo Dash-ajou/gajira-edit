@@ -45,7 +45,7 @@ module.exports = class {
     let providedFields = []
 
     if (argv.summary) {
-      console.log("Setting summary: ", argv.summary.replaceAll(`\[${projectKey}-${issueId}\] `, ""));
+      console.log("Setting summary: ", projectKey, issueId, argv.summary.replaceAll(`\[${projectKey}-${issueId}\] `, ""));
       providedFields.push({
         key: 'summary',
         value: argv.summary.replaceAll(`\[${projectKey}-${issueId}\] `, ""),
